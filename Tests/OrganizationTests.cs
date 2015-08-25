@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.Linq;
 using ZendeskApi_v2;
 using ZendeskApi_v2.Models.Organizations;
@@ -59,6 +60,31 @@ namespace Tests
             Assert.AreEqual(update.Organization.Notes, res.Organization.Notes);
 
             Assert.True(api.Organizations.DeleteOrganization(res.Organization.Id.Value));
+        }
+
+        [Test]
+        public void CanCreateManyAndDeleteOrganizations()
+        {
+            var orgs = new List<Organization>();
+            orgs.Add(new Organization() { Name = "Test Org 1" });
+            orgs.Add(new Organization() { Name = "Test Org 2" });
+
+            var job = api.Organizations.CreateManyOrganizations(orgs).JobStatus;
+
+            int sleep   = 2000;
+            int retries = 0;
+            while (!job.Status.Equals("completed") || retries < 7)
+            {
+                System.Threading.Thread.Sleep(sleep);
+                job = api.JobStatuses.GetJobStatus(job.Id).JobStatus;
+                sleep = (sleep < 64 ? sleep *= 2 : 64);
+                retries++;
+            }
+
+            Assert.Greater(job.Results.Count(), 0);
+
+            Assert.True(api.Organizations.DeleteOrganization(job.Results[0].Id));
+            Assert.True(api.Organizations.DeleteOrganization(job.Results[1].Id));
         }
     }
 }

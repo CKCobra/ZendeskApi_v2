@@ -69,13 +69,13 @@ namespace ZendeskApi_v2
         /// <param name="apiToken">Optional Param which is used if specified instead of the password</param>
         public Core(string zendeskApiUrl, string user, string password, string apiToken, string p_OAuthToken)
         {
-            User = user;
+            User     = user;
             Password = password;
             if (!zendeskApiUrl.EndsWith("/", StringComparison.CurrentCulture))
                 zendeskApiUrl += "/";
 
             ZendeskUrl = zendeskApiUrl;
-            ApiToken = apiToken;
+            ApiToken   = apiToken;
             OAuthToken = p_OAuthToken;
         }
 
@@ -102,9 +102,9 @@ namespace ZendeskApi_v2
         {
             try
             {
-                var requestUrl = ZendeskUrl + resource;
+                var requestUrl     = ZendeskUrl + resource;
                 HttpWebRequest req = WebRequest.Create(requestUrl) as HttpWebRequest;
-                req.ContentType = "application/json";
+                req.ContentType    = "application/json";
 
                 if (this.Proxy != null)
                     req.Proxy = this.Proxy;
@@ -112,24 +112,24 @@ namespace ZendeskApi_v2
                 req.Headers["Authorization"] = GetPasswordOrTokenAuthHeader();
                 req.PreAuthenticate = true;
 
-                req.Method = requestMethod; //GET POST PUT DELETE
-                req.Accept = "application/json, application/xml, text/json, text/x-json, text/javascript, text/xml";
+                req.Method        = requestMethod; //GET POST PUT DELETE
+                req.Accept        = "application/json, application/xml, text/json, text/x-json, text/javascript, text/xml";
                 req.ContentLength = 0;
 
                 if (body != null)
                 {
-                    var json = JsonConvert.SerializeObject(body, jsonSettings);
-                    byte[] formData = Encoding.UTF8.GetBytes(json);
+                    var json          = JsonConvert.SerializeObject(body, jsonSettings);
+                    byte[] formData   = Encoding.UTF8.GetBytes(json);
                     req.ContentLength = formData.Length;
 
                     var dataStream = req.GetRequestStream();
                     dataStream.Write(formData, 0, formData.Length);
                     dataStream.Close();
                 }
-                var res = req.GetResponse();
-                HttpWebResponse response = res as HttpWebResponse;
-                var responseStream = response.GetResponseStream();
-                var reader = new StreamReader(responseStream);
+                var res                   = req.GetResponse();
+                HttpWebResponse response  = res as HttpWebResponse;
+                var responseStream        = response.GetResponseStream();
+                var reader                = new StreamReader(responseStream);
                 string responseFromServer = reader.ReadToEnd();
 
                 return new RequestResult()
@@ -212,6 +212,12 @@ namespace ZendeskApi_v2
         {
             var res = RunRequest(resource, "DELETE");
             return res.HttpStatusCode == HttpStatusCode.OK || res.HttpStatusCode == HttpStatusCode.NoContent;
+        }
+
+        protected T GenericDelete<T>(string resource)
+        {
+            var res = RunRequest<T>(resource, "DELETE");
+            return res;
         }
 
         protected T GenericPost<T>(string resource, object body = null)
@@ -400,6 +406,12 @@ namespace ZendeskApi_v2
         {
             var res = RunRequestAsync(resource, "DELETE");
             return await res.ContinueWith(x => x.Result.HttpStatusCode == HttpStatusCode.OK || x.Result.HttpStatusCode == HttpStatusCode.NoContent);
+        }
+
+        protected async Task<T> GenericDeleteAsync<T>(string resource)
+        {
+            var res = RunRequestAsync<T>(resource, "DELETE");
+            return await res;
         }
 
         protected async Task<T> GenericPostAsync<T>(string resource, object body = null)
