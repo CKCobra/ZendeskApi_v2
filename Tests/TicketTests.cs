@@ -846,5 +846,96 @@ namespace Tests
             Assert.IsTrue(tickets.Users.Any());
             Assert.IsTrue(tickets.Organizations.Any());
         }
+
+        [Test]
+        public void CanImportUpdateAndDeleteTicket()
+        {
+            var ticket = new Ticket()
+            {
+                Subject   = "my printer is on fire",
+                Comment   = new Comment() { Body = "HELP" },
+                Priority  = TicketPriorities.Urgent,
+                CreatedAt = DateTimeOffset.Parse("01/01/2015 08:00:00"),
+                UpdatedAt = DateTimeOffset.Parse("02/01/2015 18:00:00")
+            };
+
+            ticket.CustomFields = new List<CustomField>()
+                {
+                    new CustomField()
+                        {
+                            Id = Settings.CustomFieldId,
+                            Value = "testing"
+                        }
+                };
+
+            var res = api.Tickets.ImportTicket(ticket).Ticket;
+
+            Assert.NotNull(res);
+            Assert.Greater(res.Id, 0);
+
+            Assert.AreNotEqual(res.CreatedAt, res.UpdatedAt);
+            Assert.AreEqual(res.CreatedAt, DateTimeOffset.Parse("01/01/2015 08:00:00"));
+            Assert.AreEqual(res.UpdatedAt, DateTimeOffset.Parse("02/01/2015 18:00:00"));
+
+            res.Status = TicketStatus.Solved;
+            res.AssigneeId = Settings.UserId;
+
+            res.CollaboratorIds.Add(Settings.CollaboratorId);
+            var body = "got it thanks";
+
+            res.CustomFields[0].Value = "updated";
+
+            var updateResponse = api.Tickets.UpdateTicket(res, new Comment() { Body = body, Public = true, Uploads = new List<string>() });
+
+            Assert.NotNull(updateResponse);
+            //Assert.AreEqual(updateResponse.Audit.Events.First().Body, body);
+            Assert.Greater(updateResponse.Ticket.CollaboratorIds.Count, 0);
+            Assert.GreaterOrEqual(updateResponse.Ticket.UpdatedAt, updateResponse.Ticket.CreatedAt);
+
+            Assert.True(api.Tickets.Delete(res.Id.Value));
+        }
+
+        [Test]
+        public void CanImportUpdateAndDeleteTicketAsync()
+        {
+            var ticket = new Ticket()
+            {
+                Subject   = "my printer is on fire",
+                Comment   = new Comment() { Body = "HELP" },
+                Priority  = TicketPriorities.Urgent,
+                CreatedAt = DateTimeOffset.Parse("01/01/2015 08:00:00"),
+                UpdatedAt = DateTimeOffset.Parse("02/01/2015 18:00:00")
+            };
+
+            ticket.CustomFields = new List<CustomField>()
+                {
+                    new CustomField()
+                        {
+                            Id = Settings.CustomFieldId,
+                            Value = "Doing fine!"
+                        }
+                };
+
+            var res = api.Tickets.ImportTicketAsync(ticket).Result.Ticket;
+
+            Assert.NotNull(res);
+            Assert.Greater(res.Id.Value, 0);
+
+            Assert.AreNotEqual(res.CreatedAt, res.UpdatedAt);
+            Assert.AreEqual(res.CreatedAt, DateTimeOffset.Parse("01/01/2015 08:00:00"));
+            Assert.AreEqual(res.UpdatedAt, DateTimeOffset.Parse("02/01/2015 18:00:00"));
+
+            res.Status = TicketStatus.Solved;
+            res.AssigneeId = Settings.UserId;
+
+            res.CollaboratorEmails = new List<string>() { Settings.ColloboratorEmail };
+            var body = "got it thanks";
+            var updateResponse = api.Tickets.UpdateTicketAsync(res, new Comment() { Body = body, Public = true });
+
+            Assert.NotNull(updateResponse.Result);
+            Assert.AreEqual(updateResponse.Result.Audit.Events.First().Body, body);
+
+            Assert.True(api.Tickets.DeleteAsync(res.Id.Value).Result);
+        }
     }
 }

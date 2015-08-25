@@ -48,6 +48,8 @@ namespace ZendeskApi_v2.Requests
         GroupCommentResponse GetTicketComments(long ticketId, int? perPage = null, int? page = null);
         GroupTicketResponse GetMultipleTickets(IEnumerable<long> ids, TicketSideLoadOptionsEnum sideLoadOptions = TicketSideLoadOptionsEnum.None);
         IndividualTicketResponse CreateTicket(Ticket ticket);
+        IndividualTicketResponse ImportTicket(Ticket ticket);
+        GroupTicketResponse ImportManyTickets(IEnumerable<Ticket> tickets);
 
         /// <summary>
         /// UpdateTicket a ticket or add comments to it. Keep in mind that somethings like the description can't be updated.
@@ -102,6 +104,8 @@ namespace ZendeskApi_v2.Requests
         Task<GroupCommentResponse> GetTicketCommentsAsync(long ticketId, int? perPage = null, int? page = null);
         Task<GroupTicketResponse> GetMultipleTicketsAsync(IEnumerable<long> ids, TicketSideLoadOptionsEnum sideLoadOptions = TicketSideLoadOptionsEnum.None);
         Task<IndividualTicketResponse> CreateTicketAsync(Ticket ticket);
+        Task<IndividualTicketResponse> ImportTicketAsync(Ticket ticket);
+        Task<GroupTicketResponse> ImportManyTicketsAsync(IEnumerable<Ticket> tickets);
 
         /// <summary>
         /// UpdateTicket a ticket or add comments to it. Keep in mind that somethings like the description can't be updated.
@@ -155,10 +159,11 @@ namespace ZendeskApi_v2.Requests
 
     public class Tickets : Core, ITickets
     {
-        private const string _tickets = "tickets";
-        private const string _ticket_forms = "ticket_forms";
-        private const string _views = "views";
-        private const string _organizations = "organizations";
+        private const string _imports        = "imports";
+        private const string _tickets        = "tickets";
+        private const string _ticket_forms   = "ticket_forms";
+        private const string _views          = "views";
+        private const string _organizations  = "organizations";
         private const string _ticket_metrics = "ticket_metrics";
 
 
@@ -207,7 +212,6 @@ namespace ZendeskApi_v2.Requests
         {
             return GenericDelete(string.Format("{0}/{1}.json", _ticket_forms, id));
         }
-
 
 
         public GroupTicketResponse GetAllTickets(int? perPage = null, int? page = null, TicketSideLoadOptionsEnum sideLoadOptions = TicketSideLoadOptionsEnum.None)
@@ -275,6 +279,18 @@ namespace ZendeskApi_v2.Requests
         {
             var body = new { ticket };
             return GenericPost<IndividualTicketResponse>(_tickets + ".json", body);
+        }
+
+        public IndividualTicketResponse ImportTicket(Ticket ticket)
+        {
+            var body = new { ticket };
+            return GenericPost<IndividualTicketResponse>(string.Format("{0}/{1}.json", _imports, _tickets), body);
+        }
+
+        public GroupTicketResponse ImportManyTickets(IEnumerable<Ticket> tickets)
+        {
+            var body = new { tickets };
+            return GenericPost<GroupTicketResponse>(string.Format("{0}/{1}/create_many.json", _imports, _tickets), body);
         }
 
         /// <summary>
@@ -511,6 +527,18 @@ namespace ZendeskApi_v2.Requests
         {
             var body = new { ticket };
             return await GenericPostAsync<IndividualTicketResponse>(_tickets + ".json", body);
+        }
+
+        public async Task<IndividualTicketResponse> ImportTicketAsync(Ticket ticket)
+        {
+            var body = new { ticket };
+            return await GenericPostAsync<IndividualTicketResponse>(string.Format("{0}/{1}.json", _imports, _tickets), body);
+        }
+
+        public async Task<GroupTicketResponse> ImportManyTicketsAsync(IEnumerable<Ticket> tickets)
+        {
+            var body = new { tickets };
+            return await GenericPostAsync<GroupTicketResponse>(string.Format("{0}/{1}/create_many.json", _imports, _tickets), body);
         }
 
         /// <summary>
