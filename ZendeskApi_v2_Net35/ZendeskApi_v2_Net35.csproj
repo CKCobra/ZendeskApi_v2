@@ -316,11 +316,17 @@
     <Compile Include="..\ZenDeskApi_v2\Models\Schedules\IndividualScheduleResponse.cs">
       <Link>Models\Schedules\IndividualScheduleResponse.cs</Link>
     </Compile>
+    <Compile Include="..\ZenDeskApi_v2\Models\Schedules\IndividualScheduleWorkWeekResponse.cs">
+      <Link>Models\Schedules\IndividualScheduleWorkWeekResponse.cs</Link>
+    </Compile>
     <Compile Include="..\ZenDeskApi_v2\Models\Schedules\Interval.cs">
       <Link>Models\Schedules\Interval.cs</Link>
     </Compile>
     <Compile Include="..\ZenDeskApi_v2\Models\Schedules\Schedule.cs">
       <Link>Models\Schedules\Schedule.cs</Link>
+    </Compile>
+    <Compile Include="..\ZenDeskApi_v2\Models\Schedules\WorkWeek.cs">
+      <Link>Models\Schedules\WorkWeek.cs</Link>
     </Compile>
     <Compile Include="..\ZendeskApi_v2\Models\Search\Result.cs">
       <Link>Models\Search\Result.cs</Link>

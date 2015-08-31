@@ -15,6 +15,7 @@ namespace ZendeskApi_v2.Requests
         IndividualScheduleResponse GetSchedule(long id);
         IndividualScheduleResponse CreateSchedule(Schedule schedule);
         IndividualScheduleResponse UpdateSchedule(Schedule schedule);
+        IndividualScheduleWorkWeekResponse UpdateIntervals(long scheduleId, Schedule workweek);
         bool DeleteSchedule(long id);
         GroupScheduleHolidayResponse GetHolidaysByScheduleId(long scheduleId);
         IndividualScheduleHolidayResponse GetHolidayByIdAndScheduleId(long scheduleId, long holidayId);
@@ -27,6 +28,7 @@ namespace ZendeskApi_v2.Requests
         Task<IndividualScheduleResponse> GetScheduleAsync(long id);
         Task<IndividualScheduleResponse> CreateScheduleAsync(Schedule schedule);
         Task<IndividualScheduleResponse> UpdateScheduleAsync(Schedule schedule);
+        Task<IndividualScheduleWorkWeekResponse> UpdateIntervalsAsync(long scheduleId, IEnumerable<Interval> intervals);
         Task<bool> DeleteScheduleAsync(long id);
         Task<GroupScheduleHolidayResponse> GetHolidaysByScheduleIdAsync(long scheduleId);
         Task<IndividualScheduleHolidayResponse> GetHolidayByIdAndScheduleIdAsync(long holidayId, long scheduleId);
@@ -63,6 +65,12 @@ namespace ZendeskApi_v2.Requests
         {
             var body = new { schedule };
             return GenericPut<IndividualScheduleResponse>(string.Format("business_hours/schedules/{0}.json", schedule.Id), body);
+        }
+
+        public IndividualScheduleWorkWeekResponse UpdateIntervals(long scheduleId, Schedule workweek)
+        {
+            var body = new { workweek };
+            return GenericPut<IndividualScheduleWorkWeekResponse>(string.Format("business_hours/schedules/{0}/workweek.json", scheduleId), body);
         }
 
         public bool DeleteSchedule(long id)
@@ -119,6 +127,12 @@ namespace ZendeskApi_v2.Requests
         {
             var body = new { schedule };
             return await GenericPutAsync<IndividualScheduleResponse>(string.Format("business_hours/schedules/{0}.json", schedule.Id), body);
+        }
+
+        public async Task<IndividualScheduleWorkWeekResponse> UpdateIntervalsAsync(long scheduleId, IEnumerable<Interval> intervals)
+        {
+            var body = new { intervals };
+            return await GenericPutAsync<IndividualScheduleWorkWeekResponse>(string.Format("business_hours/schedules/{0}/workweek.json", scheduleId), body);
         }
 
         public async Task<bool> DeleteScheduleAsync(long id)

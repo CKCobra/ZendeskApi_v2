@@ -114,8 +114,10 @@
     <Compile Include="Models\Schedules\Holiday.cs" />
     <Compile Include="Models\Schedules\IndividualScheduleHolidayResponse.cs" />
     <Compile Include="Models\Schedules\IndividualScheduleResponse.cs" />
+    <Compile Include="Models\Schedules\IndividualScheduleWorkWeekResponse.cs" />
     <Compile Include="Models\Schedules\Interval.cs" />
     <Compile Include="Models\Schedules\Schedule.cs" />
+    <Compile Include="Models\Schedules\WorkWeek.cs" />
     <Compile Include="Models\Sections\GroupSectionResponse.cs" />
     <Compile Include="Models\Sections\IndividualSectionResponse.cs" />
     <Compile Include="Models\Sections\Section.cs" />
