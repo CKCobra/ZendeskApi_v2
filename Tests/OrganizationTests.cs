@@ -73,11 +73,11 @@ namespace Tests
 
             int sleep   = 2000;
             int retries = 0;
-            while (!job.Status.Equals("completed") || retries < 7)
+            while (!job.Status.Equals("completed") && retries < 7)
             {
                 System.Threading.Thread.Sleep(sleep);
                 job = api.JobStatuses.GetJobStatus(job.Id).JobStatus;
-                sleep = (sleep < 64 ? sleep *= 2 : 64);
+                sleep = (sleep < 64000 ? sleep *= 2 : 64000);
                 retries++;
             }
 
