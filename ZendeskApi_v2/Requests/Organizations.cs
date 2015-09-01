@@ -28,6 +28,20 @@ namespace ZendeskApi_v2.Requests
         IndividualOrganizationResponse UpdateOrganization(Organization organization);
         bool DeleteOrganization(long id);
         JobStatusResponse DestroyManyOrganizations(IEnumerable<long> ids);
+
+        GroupOrganizationMembershipResponse GetOrganizationMemberships(int? perPage = null, int? page = null);
+        GroupOrganizationMembershipResponse GetOrganizationMembershipsByUserId(long userId);
+        GroupOrganizationMembershipResponse GetOrganizationMembershipsByOrganizationId(long organizationId);
+        IndividualOrganizationMembershipResponse GetOrganizationMembership(long id);
+        IndividualOrganizationMembershipResponse GetOrganizationMembershipByIdAndUserId(long id, long userid);
+        IndividualOrganizationMembershipResponse CreateOrganizationMembership(OrganizationMembership organizationMembership);
+        IndividualOrganizationMembershipResponse CreateOrganizationMembership(long userId, OrganizationMembership organizationMembership);
+        JobStatusResponse CreateManyOrganizationMemberships(IEnumerable<OrganizationMembership> organizationMemberships);
+        bool DeleteOrganizationMembership(long id);
+        bool DeleteOrganizationMembership(long id, long userId);
+        JobStatusResponse DestroyManyOrganizationMemberships(IEnumerable<long> ids);
+        GroupOrganizationMembershipResponse SetOrganizationMembershipAsDefault(long id, long userId);
+
 #endif
 
 #if ASYNC
@@ -48,6 +62,18 @@ namespace ZendeskApi_v2.Requests
         Task<bool> DeleteOrganizationAsync(long id);
         Task<JobStatusResponse> DestroyManyOrganizationsAsync(IEnumerable<long> ids);
 
+        Task<GroupOrganizationMembershipResponse> GetOrganizationMembershipsAsync(int? perPage = null, int? page = null);
+        Task<GroupOrganizationMembershipResponse> GetOrganizationMembershipsByUserIdAsync(long userId);
+        Task<GroupOrganizationMembershipResponse> GetOrganizationMembershipsByOrganizationIdAsync(long organizationId);
+        Task<IndividualOrganizationMembershipResponse> GetOrganizationMembershipAsync(long id);
+        Task<IndividualOrganizationMembershipResponse> GetOrganizationMembershipByIdAndUserIdAsync(long id, long userid);
+        Task<IndividualOrganizationMembershipResponse> CreateOrganizationMembershipAsync(OrganizationMembership organizationMembership);
+        Task<IndividualOrganizationMembershipResponse> CreateOrganizationMembershipAsync(long userId, OrganizationMembership organizationMembership);
+        Task<JobStatusResponse> CreateManyOrganizationMembershipsAsync(IEnumerable<OrganizationMembership> organizationMemberships);
+        Task<bool> DeleteOrganizationMembershipAsync(long id);
+        Task<bool> DeleteOrganizationMembershipAsync(long id, long userId);
+        Task<JobStatusResponse> DestroyManyOrganizationMembershipsAsync(IEnumerable<long> ids);
+        Task<GroupOrganizationMembershipResponse> SetOrganizationMembershipAsDefaultAsync(long id, long userId);
 #endif
     }
 
@@ -113,6 +139,69 @@ namespace ZendeskApi_v2.Requests
             return GenericDelete<JobStatusResponse>(string.Format("organizations/destroy_many.json?ids={0}", idList));
         }
 
+        public GroupOrganizationMembershipResponse GetOrganizationMemberships(int? perPage = null, int? page = null)
+        {
+            return GenericPagedGet<GroupOrganizationMembershipResponse>("organization_memberships.json", perPage, page);
+        }
+
+        public GroupOrganizationMembershipResponse GetOrganizationMembershipsByUserId(long userId)
+        {
+            return GenericPagedGet<GroupOrganizationMembershipResponse>(string.Format("users/{0}/organization_memberships.json", userId));
+        }
+
+        public GroupOrganizationMembershipResponse GetOrganizationMembershipsByOrganizationId(long organizationId)
+        {
+            return GenericPagedGet<GroupOrganizationMembershipResponse>(string.Format("organizations/{0}/organization_memberships.json", organizationId));
+        }
+
+        public IndividualOrganizationMembershipResponse GetOrganizationMembership(long id)
+        {
+            return GenericGet<IndividualOrganizationMembershipResponse>(string.Format("organization_memberships/{0}.json", id));
+        }
+
+        public IndividualOrganizationMembershipResponse GetOrganizationMembershipByIdAndUserId(long id, long userid)
+        {
+            return GenericGet<IndividualOrganizationMembershipResponse>(string.Format("users/{0}/organizations/organization_memberships/{1}.json", userid, id));
+        }
+
+        public IndividualOrganizationMembershipResponse CreateOrganizationMembership(OrganizationMembership organization_membership)
+        {
+            var body = new { organization_membership };
+            return GenericPost<IndividualOrganizationMembershipResponse>("organization_memberships.json", body);
+        }
+        public IndividualOrganizationMembershipResponse CreateOrganizationMembership(long userId, OrganizationMembership organization_membership)
+        {
+            var body = new { organization_membership };
+            return GenericPost<IndividualOrganizationMembershipResponse>(string.Format("users/{0}/organization_memberships.json", userId), body);
+        }
+
+        public JobStatusResponse CreateManyOrganizationMemberships(IEnumerable<OrganizationMembership> organization_memberships)
+        {
+            var body = new { organization_memberships };
+            return GenericPost<JobStatusResponse>("organization_memberships/create_many.json", body);
+        }
+
+        public bool DeleteOrganizationMembership(long id)
+        {
+            return GenericDelete(string.Format("organization_memberships/{0}.json", id));
+        }
+
+        public bool DeleteOrganizationMembership(long id, long userId)
+        {
+            return GenericDelete(string.Format("users/{0}/organization_memberships/{1}.json", userId, id));
+        }
+
+        public JobStatusResponse DestroyManyOrganizationMemberships(IEnumerable<long> ids)
+        {
+            string idList = string.Join(",", ids.Select(i => i.ToString()).ToArray());
+            return GenericDelete<JobStatusResponse>(string.Format("organization_memberships/destroy_many.json?ids={0}", idList));
+        }
+
+        public GroupOrganizationMembershipResponse SetOrganizationMembershipAsDefault(long id, long userId)
+        {
+            return GenericPut<GroupOrganizationMembershipResponse>(string.Format("users/{0}/organization_memberships/{1}/make_default.json", userId, id));
+        }
+
 #endif
 
 #if ASYNC
@@ -169,6 +258,70 @@ namespace ZendeskApi_v2.Requests
         {
             string idList = string.Join(",", ids.Select(i => i.ToString()).ToArray());
             return await GenericDeleteAsync<JobStatusResponse>(string.Format("organizations/destroy_many.json?ids={0}", idList));
+        }
+
+        public async Task<GroupOrganizationMembershipResponse> GetOrganizationMembershipsAsync(int? perPage = null, int? page = null)
+        {
+            return await GenericPagedGetAsync<GroupOrganizationMembershipResponse>("organization_memberships.json", perPage, page);
+        }
+
+        public async Task<GroupOrganizationMembershipResponse> GetOrganizationMembershipsByUserIdAsync(long userId)
+        {
+            return await GenericPagedGetAsync<GroupOrganizationMembershipResponse>(string.Format("users/{0}/organization_memberships.json", userId));
+        }
+
+        public async Task<GroupOrganizationMembershipResponse> GetOrganizationMembershipsByOrganizationIdAsync(long organizationId)
+        {
+            return await GenericPagedGetAsync<GroupOrganizationMembershipResponse>(string.Format("organizations/{0}/organization_memberships.json", organizationId));
+        }
+
+        public async Task<IndividualOrganizationMembershipResponse> GetOrganizationMembershipAsync(long id)
+        {
+            return await GenericGetAsync<IndividualOrganizationMembershipResponse>(string.Format("organization_memberships/{0}.json", id));
+        }
+
+        public async Task<IndividualOrganizationMembershipResponse> GetOrganizationMembershipByIdAndUserIdAsync(long id, long userid)
+        {
+            return await GenericGetAsync<IndividualOrganizationMembershipResponse>(string.Format("users/{0}/organizations/organization_memberships/{1}.json", userid, id));
+        }
+
+        public async Task<IndividualOrganizationMembershipResponse> CreateOrganizationMembershipAsync(OrganizationMembership organization_membership)
+        {
+            var body = new { organization_membership };
+            return await GenericPostAsync<IndividualOrganizationMembershipResponse>("organization_memberships.json", body);
+        }
+
+        public async Task<IndividualOrganizationMembershipResponse> CreateOrganizationMembershipAsync(long userId, OrganizationMembership organization_membership)
+        {
+            var body = new { organization_membership };
+            return await GenericPostAsync<IndividualOrganizationMembershipResponse>(string.Format("users/{0}/organization_memberships.json", userId), body);
+        }
+
+        public async Task<JobStatusResponse> CreateManyOrganizationMembershipsAsync(IEnumerable<OrganizationMembership> organization_memberships)
+        {
+            var body = new { organization_memberships };
+            return await GenericPostAsync<JobStatusResponse>("organization_memberships/create_many.json", body);
+        }
+
+        public async Task<bool> DeleteOrganizationMembershipAsync(long id)
+        {
+            return await GenericDeleteAsync(string.Format("organization_memberships/{0}.json", id));
+        }
+
+        public async Task<bool> DeleteOrganizationMembershipAsync(long id, long userId)
+        {
+            return await GenericDeleteAsync(string.Format("users/{0}/organization_memberships/{1}.json", userId, id));
+        }
+
+        public async Task<JobStatusResponse> DestroyManyOrganizationMembershipsAsync(IEnumerable<long> ids)
+        {
+            string idList = string.Join(",", ids.Select(i => i.ToString()).ToArray());
+            return await GenericDeleteAsync<JobStatusResponse>(string.Format("organization_memberships/destroy_many.json?ids={0}", idList));
+        }
+
+        public async Task<GroupOrganizationMembershipResponse> SetOrganizationMembershipAsDefaultAsync(long id, long userId)
+        {
+            return await GenericPutAsync<GroupOrganizationMembershipResponse>(string.Format("users/{0}/organization_memberships/{1}/make_default.json", userId, id));
         }
 #endif
     }
