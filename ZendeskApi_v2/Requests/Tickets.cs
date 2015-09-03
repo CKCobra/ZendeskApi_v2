@@ -50,7 +50,7 @@ namespace ZendeskApi_v2.Requests
         GroupTicketResponse GetMultipleTickets(IEnumerable<long> ids, TicketSideLoadOptionsEnum sideLoadOptions = TicketSideLoadOptionsEnum.None);
         IndividualTicketResponse CreateTicket(Ticket ticket);
         IndividualTicketResponse ImportTicket(Ticket ticket);
-        GroupTicketResponse ImportManyTickets(IEnumerable<Ticket> tickets);
+        JobStatusResponse ImportManyTickets(IEnumerable<Ticket> tickets);
 
         /// <summary>
         /// UpdateTicket a ticket or add comments to it. Keep in mind that somethings like the description can't be updated.
@@ -290,10 +290,10 @@ namespace ZendeskApi_v2.Requests
             return GenericPost<IndividualTicketResponse>(string.Format("{0}/{1}.json", _imports, _tickets), body);
         }
 
-        public GroupTicketResponse ImportManyTickets(IEnumerable<Ticket> tickets)
+        public JobStatusResponse ImportManyTickets(IEnumerable<Ticket> tickets)
         {
             var body = new { tickets };
-            return GenericPost<GroupTicketResponse>(string.Format("{0}/{1}/create_many.json", _imports, _tickets), body);
+            return GenericPost<JobStatusResponse>(string.Format("{0}/{1}/create_many.json", _imports, _tickets), body);
         }
 
         /// <summary>
