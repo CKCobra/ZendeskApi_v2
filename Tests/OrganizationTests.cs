@@ -14,7 +14,6 @@ namespace Tests
         [TestFixtureSetUp]
         public void Init()
         {
-
             var orgs = api.Organizations.GetOrganizations();
             if (orgs != null)
             {
