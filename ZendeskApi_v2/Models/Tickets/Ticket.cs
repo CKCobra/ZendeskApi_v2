@@ -95,12 +95,6 @@ namespace ZendeskApi_v2.Models.Tickets
         public Comment Comment { get; set; }
 
         /// <summary>
-        /// This is used for imports only
-        /// </summary>
-        [JsonProperty("comments")]
-        public List<Comment> Comments { get; set; }
-
-        /// <summary>
         /// This is used for updates only
         /// </summary>
         [JsonProperty("requester")]
