@@ -11,12 +11,12 @@ namespace ZendeskApi_v2.Requests
     public interface ISchedules : ICore
     {
 #if SYNC
-        GroupScheduleResponse GetSchedules(int? perPage = null, int? page = null);
+        GroupScheduleResponse GetAllSchedules();
         IndividualScheduleResponse GetSchedule(long id);
         IndividualScheduleResponse CreateSchedule(Schedule schedule);
         IndividualScheduleResponse UpdateSchedule(Schedule schedule);
-        IndividualScheduleWorkWeekResponse UpdateIntervals(long scheduleId, Schedule workweek);
         bool DeleteSchedule(long id);
+        IndividualScheduleWorkWeekResponse UpdateIntervals(long scheduleId, WorkWeek workweek);
         GroupScheduleHolidayResponse GetHolidaysByScheduleId(long scheduleId);
         IndividualScheduleHolidayResponse GetHolidayByIdAndScheduleId(long scheduleId, long holidayId);
         IndividualScheduleHolidayResponse CreateHoliday(long scheduleId, Holiday holiday);
@@ -24,12 +24,13 @@ namespace ZendeskApi_v2.Requests
         bool DeleteHoliday(long scheduleId, long holidayId);
 #endif
 #if ASYNC
-        Task<GroupScheduleResponse> GetSchedulesAsync(int? perPage = null, int? page = null);
+        Task<GroupScheduleResponse> GetAllSchedulesAsync();
         Task<IndividualScheduleResponse> GetScheduleAsync(long id);
         Task<IndividualScheduleResponse> CreateScheduleAsync(Schedule schedule);
         Task<IndividualScheduleResponse> UpdateScheduleAsync(Schedule schedule);
-        Task<IndividualScheduleWorkWeekResponse> UpdateIntervalsAsync(long scheduleId, IEnumerable<Interval> intervals);
         Task<bool> DeleteScheduleAsync(long id);
+        Task<IndividualScheduleWorkWeekResponse> UpdateIntervalsAsync(long scheduleId, WorkWeek workweek);
+
         Task<GroupScheduleHolidayResponse> GetHolidaysByScheduleIdAsync(long scheduleId);
         Task<IndividualScheduleHolidayResponse> GetHolidayByIdAndScheduleIdAsync(long holidayId, long scheduleId);
         Task<IndividualScheduleHolidayResponse> CreateHolidayAsync(long scheduleId, Holiday holiday);
@@ -37,7 +38,8 @@ namespace ZendeskApi_v2.Requests
         Task<bool> DeleteHolidayAsync(long scheduleId, long holidayId);
 #endif
     }
-        public class Schedules : Core, ISchedules
+
+    public class Schedules : Core, ISchedules
     {
         public Schedules(string yourZendeskUrl, string user, string password, string apiToken, string p_OAuthToken)
             : base(yourZendeskUrl, user, password, apiToken, p_OAuthToken)
@@ -45,9 +47,9 @@ namespace ZendeskApi_v2.Requests
         }
 
 #if SYNC
-        public GroupScheduleResponse GetSchedules(int? perPage = null, int? page = null)
+        public GroupScheduleResponse GetAllSchedules()
         {
-            return GenericPagedGet<GroupScheduleResponse>("business_hours/schedules.json", perPage, page);
+            return GenericGet<GroupScheduleResponse>("business_hours/schedules.json");
         }
 
         public IndividualScheduleResponse GetSchedule(long id)
@@ -67,15 +69,15 @@ namespace ZendeskApi_v2.Requests
             return GenericPut<IndividualScheduleResponse>(string.Format("business_hours/schedules/{0}.json", schedule.Id), body);
         }
 
-        public IndividualScheduleWorkWeekResponse UpdateIntervals(long scheduleId, Schedule workweek)
-        {
-            var body = new { workweek };
-            return GenericPut<IndividualScheduleWorkWeekResponse>(string.Format("business_hours/schedules/{0}/workweek.json", scheduleId), body);
-        }
-
         public bool DeleteSchedule(long id)
         {
             return GenericDelete(string.Format("business_hours/schedules/{0}.json", id));
+        }
+
+        public IndividualScheduleWorkWeekResponse UpdateIntervals(long scheduleId, WorkWeek workweek)
+        {
+            var body = new { workweek };
+            return GenericPut<IndividualScheduleWorkWeekResponse>(string.Format("business_hours/schedules/{0}/workweek.json", scheduleId), body);
         }
 
         public GroupScheduleHolidayResponse GetHolidaysByScheduleId(long scheduleId)
@@ -107,9 +109,9 @@ namespace ZendeskApi_v2.Requests
 #endif
 
 #if ASYNC
-        public async Task<GroupScheduleResponse> GetSchedulesAsync(int? perPage = null, int? page = null)
+        public async Task<GroupScheduleResponse> GetAllSchedulesAsync()
         {
-            return await GenericPagedGetAsync<GroupScheduleResponse>("business_hours/schedules.json", perPage, page);
+            return await GenericGetAsync<GroupScheduleResponse>("business_hours/schedules.json");
         }
 
         public async Task<IndividualScheduleResponse> GetScheduleAsync(long id)
@@ -129,15 +131,15 @@ namespace ZendeskApi_v2.Requests
             return await GenericPutAsync<IndividualScheduleResponse>(string.Format("business_hours/schedules/{0}.json", schedule.Id), body);
         }
 
-        public async Task<IndividualScheduleWorkWeekResponse> UpdateIntervalsAsync(long scheduleId, IEnumerable<Interval> intervals)
-        {
-            var body = new { intervals };
-            return await GenericPutAsync<IndividualScheduleWorkWeekResponse>(string.Format("business_hours/schedules/{0}/workweek.json", scheduleId), body);
-        }
-
         public async Task<bool> DeleteScheduleAsync(long id)
         {
             return await GenericDeleteAsync(string.Format("business_hours/schedules/{0}.json", id));
+        }
+
+        public async Task<IndividualScheduleWorkWeekResponse> UpdateIntervalsAsync(long scheduleId, WorkWeek workweek)
+        {
+            var body = new { workweek };
+            return await GenericPutAsync<IndividualScheduleWorkWeekResponse>(string.Format("business_hours/schedules/{0}/workweek.json", scheduleId), body);
         }
 
         public async Task<GroupScheduleHolidayResponse> GetHolidaysByScheduleIdAsync(long scheduleId)

@@ -33,8 +33,9 @@ namespace ZendeskApi_v2
         ISharingAgreements SharingAgreements { get; }
         ITriggers Triggers { get; }
         IHelpCenterApi HelpCenter { get; }
-        ISchedules Schedules { get; }
         IVoice Voice { get; }
+        ISchedules Schedules { get; }
+
         string ZendeskUrl { get; }
     }
 
@@ -61,8 +62,8 @@ namespace ZendeskApi_v2
         public ISharingAgreements SharingAgreements { get; set; }
         public ITriggers Triggers { get; set; }
         public IHelpCenterApi HelpCenter { get; set; }
-        public ISchedules Schedules { get; set; }
         public IVoice Voice { get; set; }
+        public ISchedules Schedules { get; set; }
 
         public string ZendeskUrl { get; set; }
 
@@ -146,8 +147,8 @@ namespace ZendeskApi_v2
             SharingAgreements   = new SharingAgreements(formattedUrl, user, password, apiToken, p_OAuthToken);
             Triggers            = new Triggers(formattedUrl, user, password, apiToken, p_OAuthToken);
             HelpCenter          = new HelpCenterApi(formattedUrl, user, password, apiToken, locale, p_OAuthToken);
-            Schedules           = new Schedules(formattedUrl, user, password, apiToken, p_OAuthToken);
             Voice               = new Voice(formattedUrl, user, password, apiToken, p_OAuthToken);
+            Schedules           = new Schedules(formattedUrl, user, password, apiToken, p_OAuthToken);
 
             ZendeskUrl = formattedUrl;
         }
@@ -185,8 +186,8 @@ namespace ZendeskApi_v2
             ((SatisfactionRatings)SatisfactionRatings).Proxy      = proxy;
             ((SharingAgreements)SharingAgreements).Proxy          = proxy;
             ((Triggers)Triggers).Proxy                            = proxy;
-            ((Schedules)Schedules).Proxy                          = proxy;
             ((Voice)Voice).Proxy                                  = proxy;
+            ((Schedules)Schedules).Proxy                          = proxy;
         }
 
 #endif
