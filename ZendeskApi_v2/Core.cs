@@ -140,8 +140,25 @@ namespace ZendeskApi_v2
             }
             catch (WebException ex)
             {
+                string error = string.Empty;
+                if (ex.Response != null || (ex.InnerException is WebException && ((WebException)(ex.InnerException)).Response != null))
+                    using (Stream stream = (ex.Response ?? ((WebException)ex.InnerException).Response).GetResponseStream())
+
+                        if (stream != null)
+                        {
+                            using (var sr = new StreamReader(stream))
+                            {
+                                error = sr.ReadToEnd();
+                            }
+                        }
                 Debug.Write(ex.Message);
-                throw new WebException(ex.Message + " " + ex.Response.Headers.ToString(), ex);
+                Debug.Write(error);
+
+                var headers = ex.Response != null ? (error.IsNullOrWhiteSpace() ? "" : ("\r\n Error Content: " + error) + "\r\n" + " Resource String: " + resource + "\r\n" + ((body != null) ? " Body: " + JsonConvert.SerializeObject(body) : "") + "\r\n" + ex.Response.Headers) : string.Empty;
+                var wException = new WebException(ex.Message + headers, ex);
+                wException.Data.Add("jsonException", error);
+
+                throw wException;
             }
         }
 
@@ -284,11 +301,11 @@ namespace ZendeskApi_v2
             var obj = Task.Factory.StartNew(() => JsonConvert.DeserializeObject<T>(response.Content));
             return await obj;
         }
-
+        
         public async Task<RequestResult> RunRequestAsync(string resource, string requestMethod, object body = null)
         {
             var requestUrl = ZendeskUrl + resource;
-            HttpWebRequest req = WebRequest.Create(requestUrl) as HttpWebRequest;
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(requestUrl);
             req.ContentType = "application/json";
 
             req.Headers["Authorization"] = GetPasswordOrTokenAuthHeader();
@@ -297,44 +314,25 @@ namespace ZendeskApi_v2
 
             if (body != null)
             {
-                var json = JsonConvert.SerializeObject(body, jsonSettings);
-                byte[] formData = Encoding.UTF8.GetBytes(json);
-
-                var requestStream = Task.Factory.FromAsync(
-                    req.BeginGetRequestStream,
-                    asyncResult => req.EndGetRequestStream(asyncResult),
-                    (object)null);
-
-                var dataStream = await requestStream.ContinueWith(t => t.Result.WriteAsync(formData, 0, formData.Length));
-                Task.WaitAll(dataStream);
+                using (Stream requestStream = await req.GetRequestStreamAsync())
+                using (StreamWriter writer = new StreamWriter(requestStream))
+                {
+                    JsonSerializer jsonSerializer = JsonSerializer.CreateDefault(jsonSettings);
+                    jsonSerializer.Serialize(writer, body);
+                }
             }
 
-            Task<WebResponse> task = Task.Factory.FromAsync(
-            req.BeginGetResponse,
-            asyncResult => req.EndGetResponse(asyncResult),
-            (object)null);
-
-            return await task.ContinueWith(t =>
+            string content = string.Empty;
+            using (WebResponse response = await req.GetResponseAsync())
             {
-                var httpWebResponse = t.Result as HttpWebResponse;
-
-                return new RequestResult
+                using (Stream responseStream = response.GetResponseStream())
+                using (StreamReader sr = new StreamReader(responseStream))
                 {
-                    Content = ReadStreamFromResponse(httpWebResponse),
-                    HttpStatusCode = httpWebResponse.StatusCode
-                };
+                    content = await sr.ReadToEndAsync();
+                }
 
-            });
-        }
-
-        private static string ReadStreamFromResponse(WebResponse response)
-        {
-            using (Stream responseStream = response.GetResponseStream())
-            using (StreamReader sr = new StreamReader(responseStream))
-            {
-                //Need to return this response 
-                string strContent = sr.ReadToEnd();
-                return strContent;
+                var httpResponse = (HttpWebResponse)response;
+                return new RequestResult { HttpStatusCode = httpResponse.StatusCode, Content = content };
             }
         }
 
