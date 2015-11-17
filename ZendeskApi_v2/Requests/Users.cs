@@ -15,12 +15,12 @@ namespace ZendeskApi_v2.Requests
     [Flags]
     public enum UserSideLoadOptions
     {
-        None = 0,
+        None          = 0,
         Organizations = 1, 
-        Abilities = 2, 
-        Roles = 4, 
-        Identities = 8, 
-        Groups = 16
+        Abilities     = 2, 
+        Roles         = 4, 
+        Identities    = 8, 
+        Groups        = 16
     }
 
     public interface IUsers : ICore
