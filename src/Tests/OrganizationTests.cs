@@ -167,16 +167,7 @@ namespace Tests
             memberships.Add(new OrganizationMembership() { UserId = res.User.Id, OrganizationId = org2.Organization.Id });
 
             var job = api.Organizations.CreateManyOrganizationMemberships(memberships).JobStatus;
-
-            int sleep = 2000;
-            int retries = 0;
-            while (!job.Status.Equals("completed") && retries < 7)
-            {
-                System.Threading.Thread.Sleep(sleep);
-                job = api.JobStatuses.GetJobStatus(job.Id).JobStatus;
-                sleep = (sleep < 64000 ? sleep *= 2 : 64000);
-                retries++;
-            }
+            job     = PollJobStatus(job);
 
             Assert.Greater(job.Results.Count(), 0);
 
@@ -188,12 +179,109 @@ namespace Tests
             Assert.True(api.Organizations.DeleteOrganization(org2.Organization.Id.Value));
         }
 
+        [Test]
+        public void CanCreateAndDeleteManyOrganizations()
+        {
+            var organizations = new List<Organization>();
+            organizations.Add(new Organization() { Name = "Test Org" });
+            organizations.Add(new Organization() { Name = "Test Org2" });
+
+            var job = api.Organizations.CreateMultipleOrganizations(organizations).JobStatus;
+            job = PollJobStatus(job);
+
+            Assert.That(job.Status, Is.EqualTo("completed"));
+            Assert.That(job.Results, Has.Count.GreaterThan(0));
+
+            var new_organizations = api.Organizations.GetMultipleOrganizations(job.Results.Select(i => i.Id)).Organizations;
+
+            Assert.That(new_organizations, Is.Not.Empty);
+            Assert.That(new_organizations, Has.Count.EqualTo(organizations.Count));
+
+            job = api.Organizations.DeleteMultipleOrganizations(new_organizations.Select(i => i.Id.Value)).JobStatus;
+            job = PollJobStatus(job);
+
+            Assert.That(job.Total.Value, Is.EqualTo(2));
+            Assert.That(job.Status, Is.EqualTo("completed"));
+        }
+
+        [Test]
+        public void CanCreateAndDeleteManyOrganizationsByExternalId()
+        {
+            var organizations = new List<Organization>();
+            organizations.Add(new Organization() { Name = "Test Org", ExternalId = "112233" });
+            organizations.Add(new Organization() { Name = "Test Org2", ExternalId = "223344" });
+
+            var job = api.Organizations.CreateMultipleOrganizations(organizations).JobStatus;
+            job     = PollJobStatus(job);
+
+            Assert.That(job.Status, Is.EqualTo("completed"));
+            Assert.That(job.Results, Has.Count.GreaterThan(0));
+
+            var new_organizations = api.Organizations.GetMultipleOrganizationsByExternalId(new List<string> { "112233", "223344" }).Organizations;
+
+            Assert.That(new_organizations, Is.Not.Empty);
+            Assert.That(new_organizations, Has.Count.EqualTo(organizations.Count));
+
+            job = api.Organizations.DeleteMultipleOrganizationsByExternalIds(new_organizations.Select(i => i.ExternalId.ToString())).JobStatus;
+            job = PollJobStatus(job);
+
+            Assert.That(job.Total.Value, Is.EqualTo(2));
+            Assert.That(job.Status, Is.EqualTo("completed"));
+        }
+
+        [Test]
+        public void CanUpdateMultipleOrganizations()
+        {
+            var organizations = new List<Organization>();
+            organizations.Add(new Organization() { Name = "Test Org", ExternalId = "112233" });
+            organizations.Add(new Organization() { Name = "Test Org2", ExternalId = "223344" });
+
+            var job = api.Organizations.CreateMultipleOrganizations(organizations).JobStatus;
+            job = PollJobStatus(job);
+
+            Assert.That(job.Status, Is.EqualTo("completed"));
+            Assert.That(job.Results, Has.Count.GreaterThan(0));
+
+            organizations[0].Notes = "Here is a sample note.";
+            organizations[1].Notes = "Here is a sample note.";
+
+            job = api.Organizations.UpdateMultipleOrganizations(organizations).JobStatus;
+            job = PollJobStatus(job);
+
+            var new_organizations = api.Organizations.GetMultipleOrganizations(job.Results.Select(i => i.Id)).Organizations;
+
+            Assert.That(new_organizations, Is.Not.Empty);
+            Assert.That(new_organizations, Has.Count.EqualTo(organizations.Count));
+            Assert.That(new_organizations[0].Notes, Is.EqualTo("Here is a sample note."));
+            Assert.That(new_organizations[1].Notes, Is.EqualTo("Here is a sample note."));
+
+            job = api.Organizations.DeleteMultipleOrganizations(new_organizations.Select(i => i.Id.Value)).JobStatus;
+            job = PollJobStatus(job);
+
+            Assert.That(job.Total.Value, Is.EqualTo(2));
+            Assert.That(job.Status, Is.EqualTo("completed"));
+        }
 
         [Test]
         public async Task CanSearchForOrganizationsAsync()
         {
             var search = await api.Organizations.SearchForOrganizationsAsync(Settings.DefaultExternalId);
             Assert.Greater(search.Count, 0);
+        }
+
+        private ZendeskApi_v2.Models.Shared.JobStatus PollJobStatus(ZendeskApi_v2.Models.Shared.JobStatus job)
+        {
+            int sleep   = 2000;
+            int retries = 0;
+            while (!job.Status.Equals("completed") && retries < 7)
+            {
+                System.Threading.Thread.Sleep(sleep);
+                job   = api.JobStatuses.GetJobStatus(job.Id).JobStatus;
+                sleep = (sleep < 64000 ? sleep *= 2 : 64000);
+                retries++;
+            }
+
+            return job;
         }
     }
 }
