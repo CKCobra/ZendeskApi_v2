@@ -17,6 +17,22 @@ namespace Tests
     public class UserTests
     {
         ZendeskApi api = new ZendeskApi(Settings.Site, Settings.AdminEmail, Settings.AdminPassword);
+        [OneTimeSetUp]
+        public void Init()
+        {
+            string[] testemails = { "test772@tester.com", "test10@test.com", "bulkuser1@test.com", "bulkuser2@test.com" };
+            foreach (string email in testemails)
+            {
+                var users = api.Users.SearchByEmail(email);
+                if (users != null)
+                {
+                    foreach (var user in users.Users.Where(o => o.Email.Equals(email)))
+                    {
+                        api.Users.DeleteUser(user.Id.Value);
+                    }
+                }
+            }
+        }
 
         [Test]
         public void CanGetUsers()
@@ -68,14 +84,6 @@ namespace Tests
         [Test]
         public void CanCreateUpdateSuspendAndDeleteUser()
         {
-            var list = api.Users.GetAllUsers();
-            var users = list.Users.Where(x => x.Email == "test772@tester.com");
-
-            foreach(var u in users)
-            {
-                api.Users.DeleteUser(u.Id.Value);
-            }
-
             var user = new User()
             {
                 Name = "tester user72",
@@ -189,10 +197,6 @@ namespace Tests
                 Name = "test user10",
                 Email = "test10@test.com",
             };
-
-            var existingUser = api.Users.SearchByEmail(user.Email);
-            if (existingUser.Count > 0)
-                api.Users.DeleteUser(existingUser.Users[0].Id.Value);
 
             var res1 = api.Users.CreateUser(user);
             var userId = res1.User.Id.Value;
@@ -317,6 +321,138 @@ namespace Tests
             //Assert
             Assert.IsNotNull(result);
             Assert.IsInstanceOf(typeof(IndividualUserRelatedInformationResponse), result);
+        }
+
+        [Test]
+        public void CanCreateOrUpdateUser()
+        {
+            var user = new User() { Name = "tester user72", Email = "test772@tester.com", Verified = true };
+            var res1 = api.Users.CreateOrUpdateUser(user);
+
+            Assert.That(res1.User.Id, Is.GreaterThan(0));
+            Assert.That(res1.User.Email, Is.EqualTo("test772@tester.com"));
+
+            user.Id    = res1.User.Id;
+            user.Notes = "Here is a sample note.";
+            res1       = api.Users.CreateOrUpdateUser(user);
+
+            Assert.That(res1.User.Id, Is.EqualTo(user.Id));
+            Assert.That(res1.User.Email, Is.EqualTo("test772@tester.com"));
+            Assert.That(res1.User.Notes, Is.EqualTo(user.Notes));
+
+            var res2 = api.Users.DeleteUser(res1.User.Id.Value);
+            Assert.That(res2);
+        }
+
+        [Test]
+        public void CanCreateAndDeleteMultipleUsers()
+        {
+            var users = new List<User>();
+            users.Add(new User() { Name = "Bulk User1", Email = "bulkuser1@test.com", Verified = true });
+            users.Add(new User() { Name = "Bulk User2", Email = "bulkuser2@test.com", Verified = true });
+
+            var job = api.Users.BulkCreateUsers(users).JobStatus;
+            job = PollJobStatus(job);
+
+            Assert.That(job.Status, Is.EqualTo("completed"));
+            Assert.That(job.Results, Has.Count.GreaterThan(0));
+            var statuses = job.Results.Select(o => o.Status);
+            Assert.That(statuses, Has.All.EqualTo("Created"));
+
+            var new_users = api.Users.GetMultipleUsers(job.Results.Select(i => i.Id)).Users;
+
+            Assert.That(new_users, Is.Not.Empty);
+            Assert.That(new_users, Has.Count.EqualTo(users.Count));
+
+            job = api.Users.DeleteMultipleUsers(new_users.Select(i => i.Id.Value)).JobStatus;
+            job = PollJobStatus(job);
+
+            Assert.That(job.Total.Value, Is.EqualTo(new_users.Count));
+            Assert.That(job.Status, Is.EqualTo("completed"));
+        }
+
+        [Test]
+        public void CanCreateAndDeleteMultipleUsersByExternalId()
+        {
+            var users = new List<User>();
+            users.Add(new User() { Name = "Bulk User1", Email = "bulkuser1@test.com", ExternalId = "BULK112233", Verified = true });
+            users.Add(new User() { Name = "Bulk User2", Email = "bulkuser2@test.com", ExternalId = "BULK223344", Verified = true });
+
+            var job = api.Users.BulkCreateUsers(users).JobStatus;
+            job = PollJobStatus(job);
+
+            Assert.That(job.Status, Is.EqualTo("completed"));
+            Assert.That(job.Results, Has.Count.GreaterThan(0));
+            var statuses = job.Results.Select(o => o.Status);
+            Assert.That(statuses, Has.All.EqualTo("Created"));
+
+            var new_users = api.Users.GetMultipleUsersByExternalId(new List<string> { "BULK112233", "BULK223344" }).Users;
+
+            Assert.That(new_users, Is.Not.Empty);
+            Assert.That(new_users, Has.Count.EqualTo(users.Count));
+
+            job = api.Users.DeleteMultipleUsersByExternalIds(new_users.Select(i => i.ExternalId)).JobStatus;
+            job = PollJobStatus(job);
+
+            Assert.That(job.Total.Value, Is.EqualTo(new_users.Count));
+            Assert.That(job.Status, Is.EqualTo("completed"));
+        }
+
+        [Test]
+        public void CanUpdateMultipleUsers()
+        {
+            var users = new List<User>();
+            users.Add(new User() { Name = "Bulk User1", Email = "bulkuser1@test.com", Verified = true });
+            users.Add(new User() { Name = "Bulk User2", Email = "bulkuser2@test.com", Verified = true });
+
+            var job = api.Users.BulkCreateUsers(users).JobStatus;
+            job     = PollJobStatus(job);
+
+            Assert.That(job.Status, Is.EqualTo("completed"));
+            Assert.That(job.Results, Has.Count.GreaterThan(0));
+            var statuses = job.Results.Select(o => o.Status);
+            Assert.That(statuses, Has.All.EqualTo("Created"));
+
+            users[0].Id    = job.Results[0].Id;
+            users[0].Notes = "Here is a sample note.";
+            users[1].Id    = job.Results[1].Id;
+            users[1].Notes = "Here is a sample note.";
+
+            job = api.Users.UpdateMultipleUsers(users).JobStatus;
+            job = PollJobStatus(job);
+
+            Assert.That(job.Status, Is.EqualTo("completed"));
+            Assert.That(job.Results, Has.Count.GreaterThan(0));
+            statuses = job.Results.Select(o => o.Status);
+            Assert.That(statuses, Has.All.EqualTo("Updated"));
+
+            var new_users = api.Users.GetMultipleUsers(job.Results.Select(i => i.Id)).Users;
+
+            Assert.That(new_users, Is.Not.Empty);
+            Assert.That(new_users, Has.Count.EqualTo(users.Count));
+            var notes = new_users.Select(o => o.Notes);
+            Assert.That(notes, Has.All.EqualTo("Here is a sample note."));
+
+            job = api.Users.DeleteMultipleUsers(new_users.Select(i => i.Id.Value)).JobStatus;
+            job = PollJobStatus(job);
+
+            Assert.That(job.Total.Value, Is.EqualTo(new_users.Count));
+            Assert.That(job.Status, Is.EqualTo("completed"));
+        }
+
+        private ZendeskApi_v2.Models.Shared.JobStatus PollJobStatus(ZendeskApi_v2.Models.Shared.JobStatus job)
+        {
+            int sleep = 2000;
+            int retries = 0;
+            while (!job.Status.Equals("completed") && retries < 7)
+            {
+                System.Threading.Thread.Sleep(sleep);
+                job = api.JobStatuses.GetJobStatus(job.Id).JobStatus;
+                sleep = (sleep < 64000 ? sleep *= 2 : 64000);
+                retries++;
+            }
+
+            return job;
         }
     }
 }

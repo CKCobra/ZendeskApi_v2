@@ -191,6 +191,8 @@ namespace Tests
 
             Assert.That(job.Status, Is.EqualTo("completed"));
             Assert.That(job.Results, Has.Count.GreaterThan(0));
+            var statuses = job.Results.Select(o => o.Status);
+            Assert.That(statuses, Has.All.EqualTo("Created"));
 
             var new_organizations = api.Organizations.GetMultipleOrganizations(job.Results.Select(i => i.Id)).Organizations;
 
@@ -216,6 +218,8 @@ namespace Tests
 
             Assert.That(job.Status, Is.EqualTo("completed"));
             Assert.That(job.Results, Has.Count.GreaterThan(0));
+            var statuses = job.Results.Select(o => o.Status);
+            Assert.That(statuses, Has.All.EqualTo("Created"));
 
             var new_organizations = api.Organizations.GetMultipleOrganizationsByExternalId(new List<string> { "112233", "223344" }).Organizations;
 
@@ -241,19 +245,28 @@ namespace Tests
 
             Assert.That(job.Status, Is.EqualTo("completed"));
             Assert.That(job.Results, Has.Count.GreaterThan(0));
+            var statuses = job.Results.Select(o => o.Status);
+            Assert.That(statuses, Has.All.EqualTo("Created"));
 
+            organizations[0].Id    = job.Results[0].Id;
             organizations[0].Notes = "Here is a sample note.";
+            organizations[1].Id    = job.Results[1].Id;
             organizations[1].Notes = "Here is a sample note.";
 
             job = api.Organizations.UpdateMultipleOrganizations(organizations).JobStatus;
             job = PollJobStatus(job);
 
+            Assert.That(job.Status, Is.EqualTo("completed"));
+            Assert.That(job.Results, Has.Count.GreaterThan(0));
+            statuses = job.Results.Select(o => o.Status);
+            Assert.That(statuses, Has.All.EqualTo("Updated"));
+
             var new_organizations = api.Organizations.GetMultipleOrganizations(job.Results.Select(i => i.Id)).Organizations;
 
             Assert.That(new_organizations, Is.Not.Empty);
             Assert.That(new_organizations, Has.Count.EqualTo(organizations.Count));
-            Assert.That(new_organizations[0].Notes, Is.EqualTo("Here is a sample note."));
-            Assert.That(new_organizations[1].Notes, Is.EqualTo("Here is a sample note."));
+            var notes = new_organizations.Select(o => o.Notes.ToString());
+            Assert.That(notes, Has.All.EqualTo("Here is a sample note."));
 
             job = api.Organizations.DeleteMultipleOrganizations(new_organizations.Select(i => i.Id.Value)).JobStatus;
             job = PollJobStatus(job);
