@@ -31,6 +31,7 @@ namespace ZendeskApi_v2.Requests
         IndividualUserRelatedInformationResponse GetUserRelatedInformation(long id);
         IndividualUserResponse MergeUser(long fromId, long intoId);
         GroupUserResponse GetMultipleUsers(IEnumerable<long> ids, UserSideLoadOptions sideLoadOptions = UserSideLoadOptions.None);
+        GroupUserResponse GetMultipleUsersByExternalId(IEnumerable<string> external_ids, UserSideLoadOptions sideLoadOptions = UserSideLoadOptions.None);
         GroupUserResponse SearchByEmail(string email);
         GroupUserResponse SearchByPhone(string phone);
         GroupUserResponse SearchByCustomUserField(string fieldKey, string fieldValue);
@@ -38,10 +39,17 @@ namespace ZendeskApi_v2.Requests
         GroupUserResponse GetUsersInGroup(long id);
         GroupUserResponse GetUsersInOrganization(long id);
         IndividualUserResponse CreateUser(User user);
+        IndividualUserResponse CreateOrUpdateUser(User user);
         JobStatusResponse BulkCreateUsers(IEnumerable<User> users);
+        JobStatusResponse CreateOrUpdateMultipleUsers(IEnumerable<User> users);
         IndividualUserResponse SuspendUser(long id);
         IndividualUserResponse UpdateUser(User user);
+        JobStatusResponse UpdateMultipleUsers(IEnumerable<User> users);
+        JobStatusResponse UpdateMultipleUsers(IEnumerable<long> ids, User user);
+        JobStatusResponse UpdateMultipleUsersByExternalId(IEnumerable<string> external_ids, User user);
         bool DeleteUser(long id);
+        JobStatusResponse DeleteMultipleUsers(IEnumerable<long> ids);
+        JobStatusResponse DeleteMultipleUsersByExternalIds(IEnumerable<string> external_ids);
         bool SetUsersPassword(long userId, string newPassword);
         bool ChangeUsersPassword(long userId, string oldPassword, string newPassword);
         GroupUserIdentityResponse GetUserIdentities(long userId);
@@ -68,6 +76,7 @@ namespace ZendeskApi_v2.Requests
         Task<IndividualUserRelatedInformationResponse> GetUserRelatedInformationAsync(long id);
         Task<IndividualUserResponse> MergeUserAsync(long fromId, long intoId);
         Task<GroupUserResponse> GetMultipleUsersAsync(IEnumerable<long> ids, UserSideLoadOptions sideLoadOptions = UserSideLoadOptions.None);
+        Task<GroupUserResponse> GetMultipleUsersByExternalIdAsync(IEnumerable<string> external_ids, UserSideLoadOptions sideLoadOptions = UserSideLoadOptions.None);
         Task<GroupUserResponse> SearchByEmailAsync(string email);
         Task<GroupUserResponse> SearchByPhoneAsync(string phone);
         Task<GroupUserResponse> SearchByCustomUserFieldAsync(string fieldKey, string fieldValue);
@@ -75,10 +84,17 @@ namespace ZendeskApi_v2.Requests
         Task<GroupUserResponse> GetUsersInGroupAsync(long id);
         Task<GroupUserResponse> GetUsersInOrganizationAsync(long id);
         Task<IndividualUserResponse> CreateUserAsync(User user);
+        Task<IndividualUserResponse> CreateOrUpdateUserAsync(User user);
         Task<JobStatusResponse> BulkCreateUsersAsync(IEnumerable<User> users);
+        Task<JobStatusResponse> CreateOrUpdateMultipleUsersAsync(IEnumerable<User> users);
         Task<IndividualUserResponse> SuspendUserAsync(long id);
         Task<IndividualUserResponse> UpdateUserAsync(User user);
+        Task<JobStatusResponse> UpdateMultipleUsersAsync(IEnumerable<User> users);
+        Task<JobStatusResponse> UpdateMultipleUsersAsync(IEnumerable<long> ids, User user);
+        Task<JobStatusResponse> UpdateMultipleUsersByExternalIdAsync(IEnumerable<string> external_ids, User user);
         Task<bool> DeleteUserAsync(long id);
+        Task<JobStatusResponse> DeleteMultipleUsersAsync(IEnumerable<long> ids);
+        Task<JobStatusResponse> DeleteMultipleUsersByExternalIdsAsync(IEnumerable<string> external_ids);
         Task<bool> SetUsersPasswordAsync(long userId, string newPassword);
         Task<bool> ChangeUsersPasswordAsync(long userId, string oldPassword, string newPassword);
         Task<GroupUserIdentityResponse> GetUserIdentitiesAsync(long userId);
@@ -148,6 +164,13 @@ namespace ZendeskApi_v2.Requests
             return GenericGet<GroupUserResponse>(resource);
         }
 
+        public GroupUserResponse GetMultipleUsersByExternalId(IEnumerable<string> external_ids, UserSideLoadOptions sideLoadOptions = UserSideLoadOptions.None)
+        {
+            string resource = GetResourceStringWithSideLoadOptionsParam($"users/show_many.json?external_ids={external_ids.ToCsv()}", sideLoadOptions);
+
+            return GenericGet<GroupUserResponse>(resource);
+        }
+
         public GroupUserResponse SearchByEmail(string email)
         {
             return GenericGet<GroupUserResponse>($"users/search.json?query={email}");
@@ -184,10 +207,22 @@ namespace ZendeskApi_v2.Requests
             return GenericPost<IndividualUserResponse>("users.json", body);
         }
 
+        public IndividualUserResponse CreateOrUpdateUser(User user)
+        {
+            var body = new { user = user };
+            return GenericPost<IndividualUserResponse>("users/create_or_update.json", body);
+        }
+
         public JobStatusResponse BulkCreateUsers(IEnumerable<User> users)
         {
             var body = new { users = users };
             return GenericPost<JobStatusResponse>("users/create_many.json", body);
+        }
+
+        public JobStatusResponse CreateOrUpdateMultipleUsers(IEnumerable<User> users)
+        {
+            var body = new { users = users };
+            return GenericPost<JobStatusResponse>("users/create_or_update_many.json", body);
         }
 
         public IndividualUserResponse SuspendUser(long id)
@@ -202,9 +237,37 @@ namespace ZendeskApi_v2.Requests
             return GenericPut<IndividualUserResponse>($"users/{user.Id}.json", body);
         }
 
+        public JobStatusResponse UpdateMultipleUsers(IEnumerable<User> users)
+        {
+            var body = new { users };
+            return GenericPut<JobStatusResponse>("users/update_many.json", body);
+        }
+
+        public JobStatusResponse UpdateMultipleUsers(IEnumerable<long> ids, User user)
+        {
+            var body = new { user };
+            return GenericPut<JobStatusResponse>($"users/update_many.json?ids={ids.ToCsv()}", body);
+        }
+
+        public JobStatusResponse UpdateMultipleUsersByExternalId(IEnumerable<string> external_ids, User user)
+        {
+            var body = new { user };
+            return GenericPut<JobStatusResponse>($"users/update_many.json?external_ids={external_ids.ToCsv()}", body);
+        }
+
         public bool DeleteUser(long id)
         {
             return GenericDelete($"users/{id}.json");
+        }
+
+        public JobStatusResponse DeleteMultipleUsers(IEnumerable<long> ids)
+        {
+            return GenericDelete<JobStatusResponse>($"users/destroy_many.json?ids={ids.ToCsv()}");
+        }
+
+        public JobStatusResponse DeleteMultipleUsersByExternalIds(IEnumerable<string> external_ids)
+        {
+            return GenericDelete<JobStatusResponse>($"users/destroy_many.json?external_ids={external_ids.ToCsv()}");
         }
 
         public bool SetUsersPassword(long userId, string newPassword)
@@ -314,6 +377,11 @@ namespace ZendeskApi_v2.Requests
             return await GenericGetAsync<GroupUserResponse>($"users/show_many.json?ids={ids.ToCsv()}");
         }
 
+        public async Task<GroupUserResponse> GetMultipleUsersByExternalIdAsync(IEnumerable<string> external_ids, UserSideLoadOptions sideLoadOptions = UserSideLoadOptions.None)
+        {
+            return await GenericGetAsync<GroupUserResponse>($"users/show_many.json?external_ids={external_ids.ToCsv()}");
+        }
+
         public async Task<GroupUserResponse> SearchByEmailAsync(string email)
         {
             return await GenericGetAsync<GroupUserResponse>($"users/search.json?query={email}");
@@ -350,10 +418,22 @@ namespace ZendeskApi_v2.Requests
             return await GenericPostAsync<IndividualUserResponse>("users.json", body);
         }
 
+        public async Task<IndividualUserResponse> CreateOrUpdateUserAsync(User user)
+        {
+            var body = new { user = user };
+            return await GenericPostAsync<IndividualUserResponse>("users/create_or_update.json", body);
+        }
+
         public async Task<JobStatusResponse> BulkCreateUsersAsync(IEnumerable<User> users)
         {
             var body = new { users = users };
             return await GenericPostAsync<JobStatusResponse>("users/create_many.json", body);
+        }
+
+        public async Task<JobStatusResponse> CreateOrUpdateMultipleUsersAsync(IEnumerable<User> users)
+        {
+            var body = new { users = users };
+            return await GenericPostAsync<JobStatusResponse>("users/create_or_update_many.json", body);
         }
 
         public async Task<IndividualUserResponse> SuspendUserAsync(long id)
@@ -368,9 +448,37 @@ namespace ZendeskApi_v2.Requests
             return await GenericPutAsync<IndividualUserResponse>($"users/{user.Id}.json", body);
         }
 
+        public async Task<JobStatusResponse> UpdateMultipleUsersAsync(IEnumerable<User> users)
+        {
+            var body = new { users };
+            return await GenericPutAsync<JobStatusResponse>($"users/update_many.json", body);
+        }
+
+        public async Task<JobStatusResponse> UpdateMultipleUsersAsync(IEnumerable<long> ids, User user)
+        {
+            var body = new { user };
+            return await GenericPutAsync<JobStatusResponse>($"users/update_many.json?ids={ids.ToCsv()}", body);
+        }
+
+        public async Task<JobStatusResponse> UpdateMultipleUsersByExternalIdAsync(IEnumerable<string> external_ids, User user)
+        {
+            var body = new { user };
+            return await GenericPutAsync<JobStatusResponse>($"users/update_many.json?external_ids={external_ids.ToCsv()}", body);
+        }
+
         public async Task<bool> DeleteUserAsync(long id)
         {
             return await GenericDeleteAsync($"users/{id}.json");
+        }
+
+        public async Task<JobStatusResponse> DeleteMultipleUsersAsync(IEnumerable<long> ids)
+        {
+            return await GenericDeleteAsync<JobStatusResponse>($"users/destroy_many.json?ids={ids.ToCsv()}");
+        }
+
+        public async Task<JobStatusResponse> DeleteMultipleUsersByExternalIdsAsync(IEnumerable<string> external_ids)
+        {
+            return await GenericDeleteAsync<JobStatusResponse>($"users/destroy_many.json?external_ids={external_ids.ToCsv()}");
         }
 
         public async Task<bool> SetUsersPasswordAsync(long userId, string newPassword)
